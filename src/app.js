@@ -147,19 +147,45 @@ app.post('/users/:userId', async (req, res) => {
   }
 });
 
+const fetch = require('node-fetch');
+
 // API Pendeteksi Kesehatan dengan Gejala
 app.post('/health/diagnose', async (req, res) => {
   const { symptoms } = req.body;
 
-  // Menghubungkan ke model GCP (asumsikan sudah dideploy di GCP)
-  const diagnosis = "Common Cold"; // Gantilah dengan model atau logika diagnosa sebenarnya
-  const confidence = 0.85;
+  try {
+    // URL endpoint model yang sudah dideploy di GCP (misalnya Vertex AI)
+    const modelEndpoint = 'https://your-gcp-model-endpoint-url'; // Gantilah dengan URL endpoint model GCP Anda
+    
+    // Mengirimkan data gejala ke model GCP untuk diagnosis menggunakan fetch
+    const response = await fetch(modelEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: symptoms }),  // Kirimkan gejala ke model untuk analisis
+    });
 
-  res.status(200).json({
-    success: true,
-    message: 'Diagnosis successful',
-    data: { diagnosis, confidence },
-  });
+    const result = await response.json();
+
+    // Mengambil hasil diagnosis dan confidence dari response model
+    const diagnosis = result.diagnosis;  // Misalnya, response dari model berisi diagnosis
+    const confidence = result.confidence;  // Misalnya, response dari model berisi tingkat confidence
+
+    // Mengirimkan hasil diagnosis ke klien
+    res.status(200).json({
+      success: true,
+      message: 'Diagnosis successful',
+      data: { diagnosis, confidence },
+    });
+
+  } catch (error) {
+    console.error('Error connecting to model:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error while connecting to the model',
+    });
+  }
 });
 
 // API Menyimpan Riwayat Kesehatan
