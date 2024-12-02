@@ -80,7 +80,12 @@ const upload = multer({
   },
 });
 
-// 1. API Registrasi Pengguna
+// Memastikan koneksi ke database
+sequelize.authenticate()
+  .then(() => console.log('Connection to the database has been established successfully.'))
+  .catch((error) => console.error('Unable to connect to the database:', error));
+
+// API Registrasi Pengguna
 app.post('/auth/register', async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
 
@@ -108,13 +113,12 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-// 2. API Login Pengguna
+// API Login Pengguna
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const userRecord = await firebaseAdmin.auth().getUserByEmail(email);
-    // Generate custom token for user
     const customToken = await firebaseAdmin.auth().createCustomToken(userRecord.uid);
 
     res.status(200).json({
@@ -127,7 +131,7 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// 3. API Menyimpan Data Pengguna di Firestore
+// API Menyimpan Data Pengguna
 app.post('/users/:userId', async (req, res) => {
   const { userId } = req.params;
   const { firstName, lastName, email } = req.body;
@@ -143,11 +147,10 @@ app.post('/users/:userId', async (req, res) => {
   }
 });
 
-// 4. API Pendeteksi Kesehatan dengan Gejala
+// API Pendeteksi Kesehatan dengan Gejala
 app.post('/health/diagnose', async (req, res) => {
   const { symptoms } = req.body;
 
-  // Lakukan logika diagnosa berdasarkan gejala
   const diagnosis = "Common Cold"; // Gantilah dengan model atau logika diagnosa sebenarnya
   const confidence = 0.85;
 
@@ -158,7 +161,7 @@ app.post('/health/diagnose', async (req, res) => {
   });
 });
 
-// 5. API Menyimpan Riwayat Kesehatan
+// API Menyimpan Riwayat Kesehatan
 app.post('/history', async (req, res) => {
   const { userId, symptoms, diagnosis, timestamp } = req.body;
 
@@ -176,7 +179,7 @@ app.post('/history', async (req, res) => {
   }
 });
 
-// 6. API Mendapatkan Riwayat Kesehatan
+// API Mendapatkan Riwayat Kesehatan
 app.get('/history/:userId', async (req, res) => {
   const { userId } = req.params;
 
@@ -192,7 +195,7 @@ app.get('/history/:userId', async (req, res) => {
   }
 });
 
-// 7. API Mengedit Data Pengguna
+// API Mengedit Data Pengguna
 app.put('/users/:userId', async (req, res) => {
   const { userId } = req.params;
   const { firstName, lastName, email } = req.body;
@@ -208,11 +211,10 @@ app.put('/users/:userId', async (req, res) => {
   }
 });
 
-// 8. API Rekomendasi Kesehatan
+// API Rekomendasi Kesehatan
 app.post('/health/recommendation', async (req, res) => {
   const { contents } = req.body;
 
-  // Logika rekomendasi kesehatan berdasarkan konten
   res.status(200).json({
     success: true,
     message: 'Health recommendation generated successfully',
@@ -224,3 +226,4 @@ app.post('/health/recommendation', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
+
