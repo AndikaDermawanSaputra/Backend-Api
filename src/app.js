@@ -151,6 +151,7 @@ app.post('/users/:userId', async (req, res) => {
 app.post('/health/diagnose', async (req, res) => {
   const { symptoms } = req.body;
 
+  // Menghubungkan ke model GCP (asumsikan sudah dideploy di GCP)
   const diagnosis = "Common Cold"; // Gantilah dengan model atau logika diagnosa sebenarnya
   const confidence = 0.85;
 
@@ -170,7 +171,7 @@ app.post('/history', async (req, res) => {
       userId,
       symptoms,
       diagnosis,
-      timestamp,
+      timestamp: timestamp || new Date(), // Gunakan tanggal sekarang jika tidak diberikan
     });
 
     res.status(200).json({ success: true, message: 'Health history saved successfully' });
@@ -184,11 +185,31 @@ app.get('/history/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const history = await HealthHistory.findAll({ where: { userId } });
+    const history = await HealthHistory.findAll({ 
+      where: { userId },
+      order: [['timestamp', 'DESC']], // Urutkan berdasarkan tanggal terbaru
+    });
+
+    // Formatkan data dengan tanggal yang lebih ramah pengguna
+    const formattedHistory = history.map(item => ({
+      id: item.id,
+      userId: item.userId,
+      symptoms: item.symptoms,
+      diagnosis: item.diagnosis,
+      timestamp: item.timestamp.toLocaleString('en-US', { 
+        timeZone: 'Asia/Jakarta', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+    }));
+
     res.status(200).json({
       success: true,
       message: 'Health history fetched successfully',
-      data: history,
+      data: formattedHistory,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -226,4 +247,5 @@ app.post('/health/recommendation', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
+
 
